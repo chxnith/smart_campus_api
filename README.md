@@ -1,3 +1,92 @@
+## Overview of the API design
+
+This project implements a versioned REST API for the university “Smart Campus” scenario using JAX-RS (Jersey) and an embedded Grizzly HTTP server, with in-memory persistence (no database). The API uses a logical resource hierarchy that reflects the campus structure:
+
+- API root and discovery: `GET /api/v1`
+- Rooms collection and room resources: `GET/POST /api/v1/rooms`, `GET/DELETE /api/v1/rooms/{roomId}`
+- Sensors inside a room: `GET /api/v1/rooms/{roomId}/sensors`
+- Sensors collection and sensor resources: `GET/POST /api/v1/sensors`, `GET /api/v1/sensors/{sensorId}`
+- Filtering/searching uses query parameters: `GET /api/v1/sensors?type=CO2`
+- Nested sensor readings via sub-resource locator: `GET/POST /api/v1/sensors/{sensorId}/readings`
+
+Base URL (default): `http://localhost:8080/api/v1`
+
+## Step-by-step build & run instructions
+
+### Prerequisites
+
+- Java JDK 17+
+- Maven 3+
+
+### Build the project
+
+From the project root:
+
+```bash
+mvn -DskipTests clean compile
+```
+
+### Launch the server
+
+```bash
+mvn -DskipTests exec:java
+```
+
+When the server starts, it listens on port `8080` and prints the base URL. Press **Enter** in the server terminal to stop it.
+
+If you see `Address already in use`, stop the other process that is using port `8080` and run again.
+
+### Run from NetBeans
+
+1. Open NetBeans.
+2. `File` → `Open Project...` and select the project folder.
+3. Click **Run Project**. NetBeans will run the Maven goals to start the server.
+
+## Sample curl commands (successful interactions)
+
+Use these to demonstrate working API calls. (For POST examples, if an ID already exists, change the ID to a new value and retry.)
+
+1) Discovery
+
+```bash
+curl -s -i 'http://localhost:8080/api/v1'
+```
+
+2) List rooms
+
+```bash
+curl -s -i 'http://localhost:8080/api/v1/rooms'
+```
+
+3) Create a room (shows `201 Created` + `Location` header)
+
+```bash
+curl -s -i -X POST 'http://localhost:8080/api/v1/rooms' \
+	-H 'Content-Type: application/json' \
+	-d '{"id":"SCI-201","name":"Science Lecture Hall","capacity":180}'
+```
+
+4) Get a specific room by ID
+
+```bash
+curl -s -i 'http://localhost:8080/api/v1/rooms/SCI-201'
+```
+
+5) List sensors and filter by type
+
+```bash
+curl -s -i 'http://localhost:8080/api/v1/sensors'
+curl -s -i 'http://localhost:8080/api/v1/sensors?type=CO2'
+```
+
+6) Navigate nested readings (seeded sensor example)
+
+```bash
+curl -s -i 'http://localhost:8080/api/v1/sensors/TEMP-001/readings'
+```
+
+---
+
 # Smart Campus API
 
 ### Question 1: In your report, explain the default lifecycle of a JAX-RS Resource class. Is a new instance instantiated for every incoming request, or does the runtime treat it as a singleton? Elaborate on how this architectural decision impacts the way you manage and synchronize your in-memory data structures (maps/lists) to prevent data loss or race conditions.
