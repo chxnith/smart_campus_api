@@ -1,44 +1,7 @@
 # Smart Campus API
 
-A high-performance, in-memory REST API built with JAX-RS (Jersey 2 / `javax.ws.rs`) and Grizzly.
+## Question: In your report, explain the default lifecycle of a JAX-RS Resource class. Is a new instance instantiated for every incoming request, or does the runtime treat it as a singleton? Elaborate on how this architectural decision impacts the way you manage and synchronize your in-memory data structures (maps/lists) to prevent data loss or race conditions.
 
-## Run
+Default behaviour of JAX-RS resource classes makes them request scoped, which means that for each HTTP request, a new object is created. The singleton nature of objects is enforced only when configured explicitly. It promotes the usage of stateless objects, although it doesn’t mitigate the possibility of having concurrency issues since the server processes numerous requests at once in separate threads. Since persistence within the application is done via the application-wide data structures like singletons or static data structures, they can cause concurrency issues since they represent mutable states of objects used by multiple threads. Therefore, you need to make sure that these structures are thread-safe or use concurrent collections and perform synchronization/ locking on operations that require multiple steps or data structures.Default behaviour of JAX-RS resource classes makes them request scoped, which means that for each HTTP request, a new object is created. The singleton nature of objects is enforced only when configured explicitly. It promotes the usage of stateless objects, although it doesn’t mitigate the possibility of having concurrency issues since the server processes numerous requests at once in separate threads. Since persistence within the application is done via the application-wide data structures like singletons or static data structures, they can cause concurrency issues since they represent mutable states of objects used by multiple threads. Therefore, you need to make sure that these structures are thread-safe or use concurrent collections and perform synchronization/ locking on operations that require multiple steps or data structures.
 
-```bash
-mvn clean compile exec:java
-```
 
-Base URL: `http://localhost:8080/api/v1`
-
-## Implemented Coursework Requirements (Part 1)
-
-- Maven project bootstrapped with JAX-RS (Jersey) and an embedded lightweight server (Grizzly).
-- Versioned entry point via `@ApplicationPath("/api/v1")` on a subclass of `javax.ws.rs.core.Application`.
-- Root discovery endpoint at `GET /api/v1` returning metadata and hypermedia-style links.
-- Core POJO models: `Room`, `Sensor`, and `SensorReading` with encapsulation.
-
-## Short Report Answers
-
-### 1) JAX-RS Resource Lifecycle and Concurrency Impact
-
-By default, JAX-RS resource classes are request-scoped in most implementations, meaning a new resource instance is created for each request. Some runtimes or DI configurations can create singleton resources, but this is an explicit design choice.
-
-Because request handling is concurrent regardless of resource lifecycle, shared in-memory data (maps/lists) must still be thread-safe. This project uses:
-
-- `ConcurrentHashMap` for key-value collections.
-- `CopyOnWriteArrayList` for lists that are read often and written less frequently.
-- `synchronized` blocks for multi-structure updates that must be atomic across maps/lists.
-
-This avoids race conditions, lost updates, and inconsistent cross-resource relationships.
-
-### 2) Why Hypermedia (HATEOAS) Helps
-
-Hypermedia lets clients discover valid next actions from API responses instead of hardcoding URL knowledge. That makes clients more resilient to API evolution, because navigation is driven by links returned by the server.
-
-Compared to static documentation, hypermedia:
-
-- Reduces tight coupling to fixed endpoint paths.
-- Guides clients dynamically based on context/state.
-- Improves discoverability for new consumers.
-- Supports progressive API evolution with fewer breaking changes.
-# smart_campus_api
